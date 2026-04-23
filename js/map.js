@@ -7,7 +7,7 @@ let leafletMap = null;
 let leafletMarker = null;
 
 /**
- * Inicializa o mapa Leaflet no elemento #map.
+ * Inicializa o mapa Leaflet no elemento #heroMap.
  * Chamado uma única vez na primeira exibição do dashboard.
  */
 function initMap(lat, lon, bairroName) {
@@ -16,7 +16,7 @@ function initMap(lat, lon, bairroName) {
     return;
   }
 
-  leafletMap = L.map('map', {
+  leafletMap = L.map('heroMap', {
     center: [lat, lon],
     zoom: 14,
     zoomControl: true,
@@ -49,6 +49,11 @@ function initMap(lat, lon, bairroName) {
     .addTo(leafletMap)
     .bindPopup(`<strong>${bairroName}</strong><br>${lat.toFixed(5)}, ${lon.toFixed(5)}`)
     .openPopup();
+
+  // Garante que o mapa pegue as dimensões reais assim que o container ficar visível
+  setTimeout(() => {
+    if (leafletMap) leafletMap.invalidateSize();
+  }, 250);
 }
 
 /**
@@ -69,5 +74,5 @@ function updateMap(lat, lon, bairroName) {
   }
 
   // Forçar recálculo de tamanho (necessário quando o container é mostrado via display:flex)
-  setTimeout(() => leafletMap.invalidateSize(), 100);
+  setTimeout(() => leafletMap.invalidateSize(), 250);
 }

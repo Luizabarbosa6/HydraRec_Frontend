@@ -1,194 +1,244 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HydraRec — Alerta de Chuvas · Recife</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HydraRec — Alerta Climático · Recife</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
 
   <!-- Leaflet (mapa) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body class="theme-default">
 
-<!-- ══ ATMOSPHERIC BG ══ -->
-<div class="atm-bg" id="atmBg"></div>
-<div class="grain"></div>
+  <!-- ══ CAMADAS DE FUNDO ══ -->
+  <div class="atm-bg" id="atmBg"></div>
+  <div class="sky-bg" id="skyBg"></div>
+  <div class="grain"></div>
+  <div id="orbContainer"></div>
+  <div id="stars"></div>
+  <div id="rainOverlay"></div>
+  <div id="lightningFlash"></div>
 
-<div class="wrap">
-
-  <!-- ══ HEADER ══ -->
-  <header class="fade-up">
-    <div class="brand">
-      <div class="brand-icon">
-         <img src="assets/logo.png" alt="HydraRec Logo">
-      </div>
-      <div class="brand-text">
-        <h1>HydraRec</h1>
-        <p>Sistema de Alerta · Recife &amp; Região Metropolitana</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="last-update" id="lastUpdate">—</div>
-      <div class="live-badge">
-        <span class="live-dot"></span> Ao vivo
-      </div>
-    </div>
-  </header>
-
-  <!-- ══ BAIRRO SELECTOR ══ -->
-  <div class="selector-card fade-up d1">
-    <div class="selector-label">📍 Selecione seu bairro</div>
-    <div class="search-wrap">
-      <div class="search-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </div>
-      <input
-        id="bairroInput"
-        type="text"
-        placeholder="Pesquise ou selecione um bairro…"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <button class="clear-btn" id="clearBtn" onclick="clearSearch()" style="display:none">✕</button>
-    </div>
-    <div class="dropdown" id="dropdown"></div>
-    <div class="selected-chip" id="selectedChip" style="display:none">
-      <span id="chipText">—</span>
-      <button onclick="clearSearch()">✕</button>
-    </div>
+  <!-- ══ TOAST ══ -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="toast-icon"></span>
+    <span class="toast-msg"></span>
   </div>
 
-  <!-- ══ ERROR ══ -->
-  <div class="error-box" id="errorBox" style="display:none">
-    ⚠️ Falha ao conectar com o servidor. Exibindo última leitura disponível.
-  </div>
+  <!-- ══ WRAPPER PRINCIPAL ══ -->
+  <div class="app">
 
-  <!-- ══ EMPTY STATE ══ -->
-  <div class="empty-state" id="emptyState">
-    <div class="empty-icon">🏙️</div>
-    <div class="empty-title">Escolha um bairro para começar</div>
-    <div class="empty-sub">Selecione seu bairro de Recife ou da Região Metropolitana para ver o alerta climático em tempo real.</div>
-  </div>
-
-  <!-- ══ DASHBOARD (hidden until bairro selected) ══ -->
-  <div id="dashboard" style="display:none">
-
-    <!-- RISK BANNER -->
-    <div class="risk-banner" id="riskBanner">
-      <div class="risk-left">
-        <div class="risk-label">Nível de Risco — <span id="riskBairroName">—</span></div>
-        <div class="risk-level" id="riskLevel">—</div>
-        <div class="risk-sub" id="riskSub">—</div>
+    <!-- ── HEADER ─ -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="header-brand">
+          <img src="assets/logohydra01.png" alt="HydraRec" class="header-logo">
+          <span class="header-title" style="font-weight: 500;">HydraRec</span>
+        </div>
+        <div class="header-center-logo">
+           <!-- Espaço para logo central, se o header-brand estiver à esquerda -->
+        </div>
+        <div class="header-actions">
+          <div class="header-clock" id="headerClock">--:--:--</div>
+          <div class="header-period" id="headerPeriod">
+            <span class="period-icon" id="periodIcon">🌤️</span>
+            <span class="period-label" id="periodLabel">Tarde</span>
+          </div>
+          <div class="live-dot-wrap">
+            <span class="live-dot"></span>
+            <span class="live-text">LIVE</span>
+          </div>
+        </div>
       </div>
-      <div class="risk-icon" id="riskIcon">⏳</div>
-      <div class="risk-analysis" id="riskAnalysis">Aguardando análise…</div>
-    </div>
+    </header>
 
-    <!-- MAIN CONTENT GRID -->
-    <div class="main-grid">
+    <!-- ── HERO SECTION ── -->
+    <section class="hero" id="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-glass-sheen" aria-hidden="true"></div>
 
-      <!-- LEFT: metrics + chart -->
-      <div class="left-col">
-
-        <!-- Metrics -->
-        <div class="metrics-grid">
-          <div class="card">
-            <div class="card-label">🌡️ Temperatura</div>
-            <div class="card-value" id="temp">—<span class="card-unit">°C</span></div>
-            <div class="card-sub">Temperatura atual</div>
-            <div class="card-accent" style="background:var(--gold)"></div>
-          </div>
-          <div class="card">
-            <div class="card-label">🌧️ Chuva Agora</div>
-            <div class="card-value" id="rain">—<span class="card-unit">mm</span></div>
-            <div class="card-sub">Precipitação no momento</div>
-            <div class="card-accent" style="background:var(--accent)"></div>
-          </div>
-          <div class="card">
-            <div class="card-label">📊 Acumulado 12h</div>
-            <div class="card-value" id="totalRain">—<span class="card-unit">mm</span></div>
-            <div class="card-sub">Total próximas 12 horas</div>
-            <div class="card-accent" style="background:#5eead4"></div>
-          </div>
-          <div class="card card--humidity">
-            <div style="flex:1">
-              <div class="card-label">💧 Umidade</div>
-              <div class="card-value" id="humidityVal">—<span class="card-unit">%</span></div>
-              <div class="card-sub">Umidade relativa</div>
-            </div>
-            <div class="humidity-arc">
-              <svg width="60" height="60" viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
-                <circle id="humidityArc" cx="32" cy="32" r="26" fill="none" stroke="var(--accent)" stroke-width="5"
-                  stroke-dasharray="163.4" stroke-dashoffset="163.4" stroke-linecap="round"/>
+      <div class="hero-content">
+        <!-- SEARCH BAR -->
+        <div class="hero-search" id="heroSearchBar">
+          <div class="search-wrap">
+            <div class="search-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <div class="arc-text" id="humidityArcText">—</div>
             </div>
+            <input id="bairroInput" type="text" placeholder="Buscar bairro em Recife ou Região Metropolitana…" autocomplete="off" spellcheck="false" />
+            <button class="clear-btn" id="clearBtn" onclick="clearSearch()" style="display:none">✕</button>
+          </div>
+          <div class="dropdown" id="dropdown"></div>
+          <div class="selected-chip" id="selectedChip" style="display:none">
+            <span id="chipText">—</span>
+            <button onclick="clearSearch()">✕</button>
           </div>
         </div>
 
-        <!-- Bar chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <div class="chart-title">Previsão de Chuva — Próximas 12h</div>
-              <div class="chart-sub">Precipitação estimada por hora (mm)</div>
+        <div class="hero-columns">
+          
+          <!-- COLUNA ESQUERDA: INFOS & MAPA -->
+          <div class="hero-left">
+            <div class="hero-empty" id="heroEmpty">
+              <div class="hero-empty-icon">🌍</div>
+              <div class="hero-empty-title">Dashboard Climático Avançado</div>
+              <div class="hero-empty-desc">Selecione uma localidade para obter métricas e monitoramento meteorológico detalhado em tempo real.</div>
             </div>
-            <div class="chart-peak">Pico: <span id="maxRainLabel">—</span> mm</div>
-          </div>
-          <div class="bar-chart" id="barChart"></div>
-        </div>
 
+            <div class="hero-info" id="heroInfo" style="display:none">
+              <div class="hero-location-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span id="heroLocationText" style="font-weight: 500;">--</span>
+              </div>
+              
+              <div class="hero-condition-group">
+                <div class="hero-condition-title" id="heroConditionTitle">--</div>
+                <div class="hero-condition-desc" id="heroConditionDesc"></div>
+              </div>
+
+              <!-- Novo grid de info -->
+              <div class="hero-metrics-grid">
+                <div class="metric-block">
+                  <div class="metric-label">Temperatura</div>
+                  <div class="hero-temp-main" style="margin: 0; padding: 0;">
+                    <span class="hero-temp-number" id="heroTempNumber">--</span>
+                    <span class="hero-temp-unit">°C</span>
+                  </div>
+                </div>
+                <div class="metric-block">
+                  <div class="metric-label">Risco Atual</div>
+                  <span class="hero-risk-badge" id="heroRiskBadge" style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 1rem;">
+                    <span class="risk-dot" id="riskDot"></span>
+                    <span id="heroRiskLabel">--</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Mini cards consolidados e premium -->
+              <div class="hero-mini-stats" id="heroMiniStats">
+                <div class="mini-stat-premium">
+                  <span class="stat-icon-glow">🌧️</span>
+                  <div>
+                    <div class="stat-lbl">Chuva Atual</div>
+                    <div class="stat-val"><span id="heroRainNow">--</span> mm</div>
+                  </div>
+                </div>
+                <div class="mini-stat-premium">
+                  <span class="stat-icon-glow">💧</span>
+                  <div>
+                    <div class="stat-lbl">Umidade</div>
+                    <div class="stat-val"><span id="heroHumidity">--</span> %</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hero-map-premium" id="heroMapWrap" style="display:none">
+                <div class="hero-map-header">
+                  <span class="hero-map-title">Visão Satélite</span>
+                  <span class="hero-map-coords" id="heroMapCoords">--</span>
+                </div>
+                <div id="heroMap" style="height: 180px; border-radius: 12px; margin-top: 0.5rem;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUNA DIREITA: ANIMAÇÃO CLIMÁTICA -->
+          <div class="hero-right" id="heroRightCol" style="display:none; align-items: center; justify-content: center;">
+            <div class="weather-animation-container">
+              <canvas id="weatherCanvas" width="400" height="400"></canvas>
+              
+              <!-- Cards flutuantes sobre a animação (inspired look) -->
+              <div class="floating-data-card top-right" style="padding: 1rem 1.5rem;">
+                <div class="fl-label" style="font-weight: 500; font-size: 0.75rem; margin-bottom: 0.4rem; letter-spacing: 0.03em;">🌬️ Intensidade do Vento</div>
+                <div class="fl-value"><span id="floatingWind">--</span> <span class="fl-unit">km/h</span></div>
+              </div>
+              <div class="floating-data-card bottom-left" style="padding: 1rem 1.5rem;">
+                <div class="fl-label" style="font-weight: 500; font-size: 0.75rem; margin-bottom: 0.4rem; letter-spacing: 0.03em;">☔ Prec. Acumulada (12h)</div>
+                <div class="fl-value"><span id="floatingRain12h">--</span> <span class="fl-unit">mm</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ERROR BOX ── -->
+    <div class="error-box" id="errorBox" style="display:none">
+      ⚠️ Falha ao conectar com o servidor. Exibindo última leitura disponível.
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div class="dashboard" id="dashboard" style="display:none">
+
+      <!-- Gráfico de chuva -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Choveu nas últimas 12 horas</div>
+            <div class="chart-sub">Precipitação acumulada por hora na região</div>
+          </div>
+          <div class="chart-peak">Pico: <span id="maxRainLabel">--</span> mm</div>
+        </div>
+        <div class="bar-chart" id="barChart"></div>
       </div>
 
-      <!-- RIGHT: map -->
-      <div class="right-col">
-        <div class="map-card">
-          <div class="map-header">
-            <div class="map-title"> <span id="mapBairroName">—</span></div>
-            <div class="map-coords" id="mapCoords">—</div>
-          </div>
-          <div id="map"></div>
-          <div class="map-footer">
-            Fonte: OpenStreetMap · Nominatim
-          </div>
+      <!-- Banner de risco -->
+      <div class="risk-banner" id="riskBanner">
+        <div class="risk-left">
+          <div class="risk-label">Nível de Risco — <span id="riskBairroName">—</span></div>
+          <div class="risk-level" id="riskLevel">—</div>
+          <div class="risk-sub" id="riskSub">—</div>
         </div>
+        <div class="risk-icon" id="riskIcon">⏳</div>
+        <div class="risk-analysis" id="riskAnalysis">Aguardando análise…</div>
+      </div>
+
+      <!-- Defesa Civil -->
+      <div class="defesa-box">
+        <div class="defesa-icon">🛡️</div>
+        <div class="defesa-text">
+          <h3>Defesa Civil de Recife</h3>
+          <p>Em caso de emergência, acione a Defesa Civil Municipal.</p>
+        </div>
+        <a class="defesa-num" href="tel:08000813400">0800 081 3400</a>
       </div>
 
     </div>
 
-    <!-- DEFESA CIVIL -->
-    <div class="defesa-box">
-      <div class="defesa-icon">🛡️</div>
-      <div class="defesa-text">
-        <h3>Defesa Civil de Recife</h3>
-        <p>Em caso de emergência ou situação de risco, acione imediatamente a Defesa Civil Municipal.</p>
-      </div>
-      <a class="defesa-num" href="tel:08000813400">0800 081 3400</a>
-    </div>
+    <!-- ── FOOTER ── -->
+    <footer class="app-footer" style="padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 2rem;">
+      <span class="footer-brand" style="font-weight: 500;">HydraRec ® 2026</span>
+    </footer>
 
-  </div><!-- /dashboard -->
+  </div><!-- /app -->
 
-  <footer class="fade-up">
-    HydraRec © 2025 · Desenvolvido com <span>♥</span> para Recife · Dados via Open-Meteo + Claude AI
-  </footer>
-
-</div><!-- /wrap -->
-
-<script src="js/config.js"></script>
-<script src="js/bairros.js"></script>
-<script src="js/api.js"></script>
-<script src="js/map.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/main.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/hero.js"></script>
+  <script src="js/bairros.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/daynight.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
 </body>
+
 </html>
